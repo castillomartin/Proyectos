@@ -2,7 +2,7 @@
 using namespace std;
 
 //n number of repetitions to calculate the average of the times
-void ShowTimeAvg(MatrizP * m, int n, char tipo);
+void ShowTimeAvg(MatrizP * m, int n, char tipo, char * C);
 
 int main(int argc, char* argv[])
 {
@@ -11,15 +11,17 @@ int main(int argc, char* argv[])
 
     m->ReadM1(argv[1]);
     m->ReadM2(argv[2]);
+    char  C[100];
+	strcpy(C,argv[3]);
     char t = argv[4][0];
 	
-    ShowTimeAvg(m,1,t);
+    ShowTimeAvg(m,1,t,C);
 
 	return 0;
 }
 
 
-void ShowTimeAvg(MatrizP * m, int n, char tipo){
+void ShowTimeAvg(MatrizP * m, int n, char tipo, char * C){
 
     float sum=0.0;
     int i;
@@ -32,9 +34,7 @@ void ShowTimeAvg(MatrizP * m, int n, char tipo){
     end1 = clock();
     
 	if(i==0){
-	strcpy(y,"C");
-    m->SaveM3(y);
-	
+    m->SaveM3(C);
 	
 	if(tipo=='1'){
 		strcpy(y,"C0");
@@ -51,12 +51,7 @@ void ShowTimeAvg(MatrizP * m, int n, char tipo){
 	char name [100],x1;
 	strcpy(name,"plot.bin");
 	pFile = fopen (name,"rb + wb");
-	
-	//if(tipo != '1'){
-	// while (!feof(pFile))
-		 // fscanf (pFile, "%c", &x1);
-	// }
-    
+	    
 	fseek(pFile,0,SEEK_END);
     fprintf (pFile, "%c %f\n",tipo,sum/n);
 	
