@@ -10,7 +10,7 @@ main.o: main.cpp Matriz.h
 compare.o: compare.cpp Matriz.h
 	g++ -c compare.cpp
 	
-main: cleanplot programa compare 
+test: cleanplot programa compare 
 	./programa A B C 1
 	./compare C C0
 	./programa A B C 2
