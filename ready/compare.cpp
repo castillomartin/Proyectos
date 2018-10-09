@@ -26,7 +26,7 @@ bool Comparer(MatrizP * m){
 	int i,j;
 	for(i=0;i<m->getf1();i++)
 		for(j=0;j<m->getc1();j++){
-			if(abs(m->getm1pos(i,j) - m->getm1pos(i,j)) > numeric_limits<float>::epsilon())
+			if(abs(m->getm1pos(i,j) - m->getm2pos(i,j)) > numeric_limits<float>::epsilon())
 				return false;
 		} 
 		return true;
