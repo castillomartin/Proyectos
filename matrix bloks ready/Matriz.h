@@ -234,12 +234,6 @@ class Matriz : public MatrizP
         }
 
 		int GetCorrectSize(int x){
-			if(x==1){
-				int ml = 3072;
-				int b = sqrt(ml/3);
-				for(int i=b;i<c1;i++)
-					if(c1%i==0)return i;
-			}
 			if(c1%x==0)
 				return x;
 			else{

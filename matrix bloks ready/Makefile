@@ -7,7 +7,7 @@ l1cache: l1.cpp Matriz.h
 l2cache: l2.cpp Matriz.h
 	g++ -I/usr/Inlcude -o0 l2.cpp /usr/lib64/libpapi.so -o l2cache
 	
-ipc: main.cpp Matriz.h
+ipc: cicle.cpp Matriz.h
 	g++ -I/usr/Inlcude -o0 cicle.cpp /usr/lib64/libpapi.so -o ipc
 
 tlb: tlb.cpp Matriz.h
@@ -17,31 +17,31 @@ testflops: cleanflops cleantime flops
 	./flops A B C 1
 	./flops A B C 7 32
 	./flops A B C 8 32
-	./flops A B C 8 1
+	./flops A B C 8 52
 	
 testl1cache: cleanl1 l1cache 
 	./l1cache A B C 1
 	./l1cache A B C 7 32
 	./l1cache A B C 8 32
-	./l1cache A B C 8 1
+	./l1cache A B C 8 52
 	
 testl2cache: cleanl2 l2cache 
 	./l2cache A B C 1
 	./l2cache A B C 7 32
 	./l2cache A B C 8 32
-	./l2cache A B C 8 1
+	./l2cache A B C 8 52
 	
 testipc: cleanipc ipc 
 	./ipc A B C 1
 	./ipc A B C 7 32
 	./ipc A B C 8 32
-	./ipc A B C 8 1
+	./ipc A B C 8 52
 
 testtlb: cleantlb tlb 
 	./tlb A B C 1
 	./tlb A B C 7 32
 	./tlb A B C 8 32
-	./tlb A B C 8 1
+	./tlb A B C 8 52
 	
 compare: compare.cpp Matriz.h 
 	g++ -o compare compare.cpp 

@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 	if(argc < 6)tipo = 1;
 	else if(t=='7')tipo = 2;
 	else if(t=='8')tipo = 3;
-	if(argc == 6 && m->getblock()==1) tipo = 4;
+	if(argc == 6 && m->getblock()!=32) tipo = 4;
 	
 	
 	if((retval=PAPI_flops( &real_time, &proc_time, &flpins, &mflops))<PAPI_OK)
