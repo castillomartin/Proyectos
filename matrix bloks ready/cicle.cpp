@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 void MultiplicationMatriz(MatrizP * m, char tipo, char * C){
 
     float sum=0.0;
-    int i;
+    int i = 0;
 	char  y[100];
 	
 	m->MultMatriz(tipo);

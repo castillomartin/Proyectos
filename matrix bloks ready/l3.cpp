@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 void ShowTimeAvg(MatrizP * m, int n, char tipo, char * C){
 
     float sum=0.0;
-    int i;
+    int i = 0;
 	char  y[100];
     for(i=0;i<n;i++){
 		m->MultMatriz(tipo);
