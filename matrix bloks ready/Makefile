@@ -1,3 +1,5 @@
+all: flops l1cache l2cache ipc tlb
+
 flops: main.cpp Matriz.h
 	g++ -I/usr/Inlcude -o0 main.cpp /usr/lib64/libpapi.so -o flops
 	
