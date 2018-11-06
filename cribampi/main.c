@@ -5,11 +5,11 @@
 
 int Min(int a,int b);
 
-int Low(int rank, int sizee, int n);
+int Low(int rank, int sizee, int n, int m);
 
-int High(int rank, int sizee, int n);
+int High(int rank, int sizee, int n, int m);
 
-int Lenght(int rank, int sizee, int n);
+int Lenght(int rank, int sizee, int n, int m);
 
 int main(int argc, char** argv){
 
@@ -39,9 +39,9 @@ int main(int argc, char** argv){
     m = atoi(argv[1]);
     n = atoi(argv[2]);
 
-    low_value  = 3 + Low(my_rank, my_size, n - 1)  * 2;
-    high_value = 3 + High(my_rank, my_size, n - 1) * 2;
-    size       = Lenght(my_rank, my_size, n - 1);
+    low_value  = 3 + Low(my_rank, my_size, n - 1,m)  * 2;
+    high_value = 3 + High(my_rank, my_size, n - 1,m) * 2;
+    size       = Lenght(my_rank, my_size, n - 1,m);
 
     koren = sqrt(n);
     primes = (char*)calloc(koren + 1, 1);
@@ -94,14 +94,11 @@ int main(int argc, char** argv){
               first += prime;
 
 
-           first_value_index = (first - 3) / 2 - Low(my_rank, my_size, n - 1);
+           first_value_index = (first - 3) / 2 - Low(my_rank, my_size, n - 1,m);
            prime_doubled     = prime * 2 ;
 
            for (i = first; i <= high_value; i += prime_doubled)   {
-			   if(my_rank == 0){
-				   //printf("first- %d high_value- %d\n", i, high_value);
-			   }
-               marked[first_value_index] = 1;
+			   marked[first_value_index] = 1;
                first_value_index += prime;
            }
         }
@@ -127,13 +124,13 @@ int main(int argc, char** argv){
     }
     int pos;
     for (i = 0; i < size; i++){
-            pos = (i+Low(my_rank, my_size, n - 1))*2+3;
+            pos = (i+Low(my_rank, my_size, n - 1,m))*2+3;
         if (!marked[i]){
             count++;
             if(pos < m)
                 count2++;
              if(pos >=m && pos <=n)
-                fprintf(f,"%d\n",(i+Low(my_rank, my_size, n - 1))*2+3);
+                fprintf(f,"%d\n",(i+Low(my_rank, my_size, n - 1,m))*2+3);
             }
     }
     fclose(f);
@@ -147,7 +144,7 @@ int main(int argc, char** argv){
         global_count2 += 1;
         //printf("%d primes are less than or equal to %d\n",global_count2, m);
         //printf("%d primes are less than or equal to %d\n",global_count, n);
-        printf("there are %d number between %d and %d\n",global_count-global_count2+1, m,n);
+        printf("there are %d number between %d and %d\n",global_count-global_count2, m,n);
         printf("Total elapsed time: %10.6fs\n",elapsed_time);
     }
 
@@ -161,12 +158,12 @@ int main(int argc, char** argv){
 int Min(int a,int b){
     return (a<b)?a:b;
 }
-int Low(int rank, int sizee, int n){
-    return rank*n/sizee/2;
+int Low(int rank, int sizee, int n, int m){
+    return (m+ rank*(n-m)/sizee +1)/2;
 }
-int High(int rank, int sizee, int n){
-    return Low(rank+1,sizee,n)-1;
+int High(int rank, int sizee, int n, int m){
+    return Low(rank+1,sizee,n,m)-1;
 }
-int Lenght(int rank, int sizee, int n){
-    return Low(rank+1,sizee,n)-Low((rank), sizee, n);
+int Lenght(int rank, int sizee, int n, int m){
+    return Low(rank+1,sizee,n,m)-Low((rank), sizee, n,m);
 }
