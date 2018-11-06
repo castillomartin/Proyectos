@@ -60,7 +60,7 @@ int main(int argc, char** argv){
     }
 
     marked = (char*)calloc(size * sizeof(char), 1);
-
+    marked[1] = 0;
     num_per_block    = 1048576;
     block_low_value  = low_value;
     block_high_value = Min(high_value,low_value + num_per_block * 2);
@@ -98,6 +98,9 @@ int main(int argc, char** argv){
            prime_doubled     = prime * 2 ;
 
            for (i = first; i <= high_value; i += prime_doubled)   {
+			   if(my_rank == 0){
+				   //printf("first- %d high_value- %d\n", i, high_value);
+			   }
                marked[first_value_index] = 1;
                first_value_index += prime;
            }
@@ -116,6 +119,12 @@ int main(int argc, char** argv){
     FILE * f = fopen(file,"a+b");
     count = 0;
     count2 = 0;
+
+    if(my_rank == 0){
+        if(2 >=m && 2 <=n)
+                fprintf(f,"%d\n",2);
+
+    }
     int pos;
     for (i = 0; i < size; i++){
             pos = (i+Low(my_rank, my_size, n - 1))*2+3;
@@ -138,8 +147,8 @@ int main(int argc, char** argv){
         global_count2 += 1;
         //printf("%d primes are less than or equal to %d\n",global_count2, m);
         //printf("%d primes are less than or equal to %d\n",global_count, n);
-        printf("there are %d number between %d and %d\n",global_count-global_count2, m,n);
-        //printf("Total elapsed time: %10.6fs\n",elapsed_time);
+        printf("there are %d number between %d and %d\n",global_count-global_count2+1, m,n);
+        printf("Total elapsed time: %10.6fs\n",elapsed_time);
     }
 
     MPI_Finalize();
