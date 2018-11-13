@@ -20,7 +20,7 @@ int main(int argc, char** argv){
     int     num_per_block,block_low_value,block_high_value;
     char*   marked,*primes;
 	int maxtime = 0,tm;
-	
+
     MPI_Init(&argc, &argv);
 
     /* start the timer */
@@ -38,6 +38,7 @@ int main(int argc, char** argv){
     }
 
     m = atoi(argv[1]);
+    if(m == 1)m--;
     n = atoi(argv[2]);
 
     low_value  = 3 + Low(my_rank, my_size, n - 1,m)  * 2;
@@ -69,7 +70,7 @@ int main(int argc, char** argv){
 //    printf("rank : %d\n",my_rank);
 //    printf("lv : %d\n",low_value);
 //    printf("lh : %d\n",high_value);
-//    printf("s : %d\n",size);
+    printf("s : %d\n",size);
 
 
     for (i = 0;i < size; i += num_per_block){
