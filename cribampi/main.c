@@ -19,7 +19,8 @@ int main(int argc, char** argv){
     int     size,first_value_index,prime_doubled,koren,p;
     int     num_per_block,block_low_value,block_high_value;
     char*   marked,*primes;
-
+	int maxtime = 0,tm;
+	
     MPI_Init(&argc, &argv);
 
     /* start the timer */
@@ -137,7 +138,10 @@ int main(int argc, char** argv){
     MPI_Reduce(&count, &global_count, 1, MPI_INT,MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&count2, &global_count2, 1, MPI_INT,MPI_SUM, 0, MPI_COMM_WORLD);
 
-    elapsed_time += MPI_Wtime();
+    tm = MPI_Wtime();
+    elapsed_time += tm;
+	if(maxtime > tm)
+		maxtime = tm;
 
     if (my_rank == 0)   {
         global_count += 1;
@@ -145,7 +149,8 @@ int main(int argc, char** argv){
         //printf("%d primes are less than or equal to %d\n",global_count2, m);
         //printf("%d primes are less than or equal to %d\n",global_count, n);
         printf("there are %d number between %d and %d\n",global_count-global_count2, m,n);
-        printf("Total elapsed time: %10.6fs\n",elapsed_time);
+        //printf("Total elapsed time: %10.6fs\n",elapsed_time);
+        //printf("Max time: %10.6fs\n",maxtime);
     }
 
     MPI_Finalize();
