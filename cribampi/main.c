@@ -13,7 +13,7 @@ int Lenght(int rank, int sizee, int n, int m);
 
 int main(int argc, char** argv){
 
-    int     count,count2;
+    int     count,count2,aux;
     double  elapsed_time;
     int     first,global_count,global_count2,high_value,i,my_rank ,index,low_value,n,m,my_size,prime;
     int     size,first_value_index,prime_doubled,koren,p;
@@ -38,6 +38,7 @@ int main(int argc, char** argv){
     }
 
     m = atoi(argv[1]);
+    aux = m;
     if(m == 1)m--;
     n = atoi(argv[2]);
 
@@ -128,11 +129,12 @@ int main(int argc, char** argv){
     for (i = 0; i < size; i++){
             pos = (i+Low(my_rank, my_size, n - 1,m))*2+3;
         if (!marked[i]){
-            count++;
-            if(pos < m)
+            if(pos <= m)
                 count2++;
-             if(pos >=m && pos <=n)
+             if(pos >m && pos <=n){
+                count++;
                 fprintf(f,"%d\n",(i+Low(my_rank, my_size, n - 1,m))*2+3);
+                }
             }
     }
     fclose(f);
@@ -145,11 +147,12 @@ int main(int argc, char** argv){
 		maxtime = tm;
 
     if (my_rank == 0)   {
-        global_count += 1;
-        global_count2 += 1;
+        //global_count += 1;
+        //global_count2 += 1;
         //printf("%d primes are less than or equal to %d\n",global_count2, m);
         //printf("%d primes are less than or equal to %d\n",global_count, n);
-        printf("there are %d number between %d and %d\n",global_count-global_count2, m,n);
+
+        printf("there are %d number between %d and %d\n",global_count-global_count2+1, aux,n);
         //printf("Total elapsed time: %10.6fs\n",elapsed_time);
         //printf("Max time: %10.6fs\n",maxtime);
     }
