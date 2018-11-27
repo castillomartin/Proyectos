@@ -42,8 +42,8 @@ int main(int argc, char** argv){
     if(m == 1)m--;
     n = atoi(argv[2]);
 
-    low_value  = 3 + Low(my_rank, my_size, n - 1,m)  * 2;
-    high_value = 3 + High(my_rank, my_size, n - 1,m) * 2;
+    low_value  = 1 + Low(my_rank, my_size, n - 1,m)  * 2;
+    high_value = 1 + High(my_rank, my_size, n - 1,m) * 2;
     size       = Lenght(my_rank, my_size, n - 1,m);
 
     koren = sqrt(n);
@@ -69,8 +69,7 @@ int main(int argc, char** argv){
     block_high_value = Min(high_value,low_value + num_per_block * 2);
 
 //    printf("rank : %d\n",my_rank);
-//    printf("lv : %d\n",low_value);
-//    printf("lh : %d\n",high_value);
+    printf("%d %d\n",low_value,high_value);
     //printf("s : %d\n",size);
 
 
@@ -97,7 +96,7 @@ int main(int argc, char** argv){
               first += prime;
 
 
-           first_value_index = (first - 3) / 2 - Low(my_rank, my_size, n - 1,m);
+           first_value_index = (first - 1) / 2 - Low(my_rank, my_size, n - 1,m);
            prime_doubled     = prime * 2 ;
 
            for (i = first; i <= high_value; i += prime_doubled)   {
@@ -127,13 +126,13 @@ int main(int argc, char** argv){
     }
     int pos;
     for (i = 0; i < size; i++){
-            pos = (i+Low(my_rank, my_size, n - 1,m))*2+3;
+            pos = (i+Low(my_rank, my_size, n - 1,m))*2+1;
         if (!marked[i]){
             if(pos <= m)
                 count2++;
              if(pos >m && pos <=n){
                 count++;
-                fprintf(f,"%d\n",(i+Low(my_rank, my_size, n - 1,m))*2+3);
+                fprintf(f,"%d\n",(i+Low(my_rank, my_size, n - 1,m))*2+1);
                 }
             }
     }
@@ -155,8 +154,8 @@ int main(int argc, char** argv){
     if (my_rank == 0)   {
         //global_count += 1;
         //global_count2 += 1;
-        //printf("%d primes are less than or equal to %d\n",global_count2, m);
-        //printf("%d primes are less than or equal to %d\n",global_count, n);
+        printf("%d primes are less than or equal to %d\n",global_count2, m);
+        printf("%d primes are less than or equal to %d\n",global_count, n);
 
         printf("there are %d number between %d and %d\n",global_count-global_count2+1, aux,n);
         printf("Total elapsed time: %10.6fs\n",s);
