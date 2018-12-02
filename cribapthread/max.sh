@@ -1,5 +1,5 @@
 gnuplot << EOP
-set yrange[0:20]
+set yrange[0:100]
 set terminal jpeg size 640,480
 set output "Max.jpg"
 set title "Max"

@@ -1,5 +1,5 @@
 main: main.cpp
-	g++  main.cpp -o main -lm -pthread
+	g++  main.cpp -o main -lm -pthread -lrt
 
 test: clean
 	./main 1 100 4
@@ -18,4 +18,4 @@ clean:
 	
 graph:
 	./max.sh
-	./time.sh
+	./total.sh

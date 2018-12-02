@@ -5,18 +5,23 @@
 #include <iostream>
 #include <math.h>
 #include <ctime>
+#include <time.h>
+#include <unistd.h>
 
+#define BILLION  1000000000L;
 
 int NUMTHRDS = 4;
 pthread_t * callThd;
 pthread_mutex_t mutexsum;
 pthread_mutex_t mutetime;
 int sum;
-float sum1 = 0.0,maxi=0.0;
+float sum1 = 0.0,maxi=0.0, maxi2 = 0.0;
 long * Comp;
 int VECLEN = 50;
 int IECLEN = 10;
 long long int start1,end1;
+struct timespec starttime, stoptime;
+double accum;
 
 void *setTotalPrimes(void *arg) {
     /* Define and use local variables for convenience */
@@ -69,8 +74,14 @@ void *setTotalPrimes(void *arg) {
             }
         }
     }
-
-    start1 = clock();
+	
+	
+    if( clock_gettime( CLOCK_REALTIME, &starttime) == -1 ) {
+      perror( "clock gettime" );
+      exit( EXIT_FAILURE );
+    }
+	
+    // start1 = clock();
 
     /**
      Sieve of Eratoshenes.
@@ -97,19 +108,31 @@ void *setTotalPrimes(void *arg) {
         }
     }
 
-    end1 = clock();
+	//end1 = clock();
+	
+    if( clock_gettime( CLOCK_REALTIME, &stoptime) == -1 ) {
+      perror( "clock gettime" );
+      exit( EXIT_FAILURE );
+    }
+
 
     pthread_mutex_lock (&mutetime);
-    sum1 = sum1 + (double)(end1 - start1) / 1000;
-    //printf("%d-%f: \n",offset,(double)(end1 - start1) / 1000);
-    if(maxi < (double)(end1 - start1) / 1000)
-        maxi = (double)(end1 - start1) / 1000;
+	
+	accum = (double)( stoptime.tv_sec - starttime.tv_sec )
+          + (double)( stoptime.tv_nsec - starttime.tv_nsec )
+            / (double)BILLION;
+			
+     sum1 = sum1 + accum;
+	 
+	if(maxi2 < accum)
+        maxi2 = accum;
     pthread_mutex_unlock (&mutetime);
 
     fclose(f);
 
     pthread_mutex_lock (&mutexsum);
-    std::cout << "Start : " << start << " End : " << end << " len: " << len << std::endl;
+	
+    //std::cout << "Start : " << start << " End : " << end << " len: " << len << std::endl;
     sum += mysum;
     pthread_mutex_unlock (&mutexsum);
 
@@ -161,10 +184,10 @@ int main (int argc, char *argv[])
 
     char file[] = "plot";
     FILE * g = fopen(file,"a+b");
-    fprintf(g,"%d %f %f\n",NUMTHRDS,sum1,maxi);
+    fprintf(g,"%d %f %f\n",NUMTHRDS,sum1,maxi2);
     fclose(g);
     /* After joining, print out the results and cleanup */
-    printf ("Total number of Prime =  %d \nTime: %f\nMax: %f\n", sum, sum1,maxi);
+    printf ("Total number of Prime =  %d \nTime: %f\nMax: %f\n", sum, sum1,maxi2);
 
 
 //
