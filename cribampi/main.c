@@ -120,22 +120,30 @@ int main(int argc, char** argv){
     count2 = 0;
 
     if(my_rank == 0){
-        if(2 >=m && 2 <=n)
+        if(2 >=m && 2 <=n){
                 fprintf(f,"%d\n",2);
+                 count++;}
 
     }
     int pos;
+
+    if(my_rank == my_size -1)
+        size++;
+
     for (i = 0; i < size; i++){
             pos = (i+Low(my_rank, my_size, n - 1,m))*2+1;
+            printf("rank - %d primo- %d\n",my_rank,pos);
         if (!marked[i]){
             if(pos <= m)
                 count2++;
-             if(pos >m && pos <=n){
+             if(pos >=m && pos <=n && pos != 1){
                 count++;
-                fprintf(f,"%d\n",(i+Low(my_rank, my_size, n - 1,m))*2+1);
+                fprintf(f,"%d\n",pos);
+
                 }
             }
     }
+    printf("rank - %d p- %d\n",my_rank,count);
     fclose(f);
     MPI_Reduce(&count, &global_count, 1, MPI_INT,MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&count2, &global_count2, 1, MPI_INT,MPI_SUM, 0, MPI_COMM_WORLD);
@@ -154,10 +162,9 @@ int main(int argc, char** argv){
     if (my_rank == 0)   {
         //global_count += 1;
         //global_count2 += 1;
-        printf("%d primes are less than or equal to %d\n",global_count2, m);
-        printf("%d primes are less than or equal to %d\n",global_count, n);
+       printf("%d primes are less than or equal to %d\n",global_count, n);
 
-        printf("there are %d number between %d and %d\n",global_count-global_count2+1, aux,n);
+        printf("there are %d number between %d and %d\n",global_count, aux,n);
         printf("Total elapsed time: %10.6fs\n",s);
         printf("Max time: %10.6fs\n",max);
 

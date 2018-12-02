@@ -5,4 +5,9 @@ run: ./program clean
 	mpirun -np 8 ./program 100 200
 
 clean:
-	rm -f % *.bin *.o
+	@rm -f % plot
+	@touch plot
+	
+graph:
+	./max.sh
+	./total.sh
