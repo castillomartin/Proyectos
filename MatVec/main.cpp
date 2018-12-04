@@ -1,183 +1,147 @@
-#include "stdio.h"
-#include "stdlib.h"
-#include "time.h"
-#include "math.h"
-#include "mpi.h"
-#include "string.h"
+#include "fun.h"
+using namespace std;
 
-
-int AROW,ACOL,i,j;
-/* Process mapping function */
-int proc_map(int i, int size);
-
-int main(int argc, char** argv)
+int main(int argc, char *argv[])
 {
-    int size, rank;
-    MPI_Status Stat;
-    double  elapsed_time,tm,maxtime,s,maxi;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    if (rank == 0)
-    {
-
-        MPI_File cFile,cFile2;
-        MPI_Status  status,status1, status2;
+	int error,left, right,length,n_rows, m_columns;
+	int my_size, my_rank;
+	double t_total = 0.0, t_max = 0.0,t_start = 0.0, t_end = 0.0;
+	string F_A, F_B, F_C;
 
 
-        //char *a1,*b1;
-        //strcpy(a1,argv[1]);
-        //strcpy(b1,argv[2]);
-        int r1 = MPI_File_open( MPI_COMM_SELF, argv[1], MPI_MODE_RDONLY, MPI_INFO_NULL, &cFile);
-        float dd;
+	F_A = argv[1];
+	F_B = argv[2];
+	F_C = argv[3];
 
-        MPI_File_read(cFile,&AROW,1,MPI_INT,&status2);
-        MPI_File_read(cFile,&ACOL,1,MPI_INT,&status1);
+	Matrix matrix1;
+	Matrix vector1;
+	
+	if ((error = MPI_Init(&argc, &argv)) != MPI_SUCCESS){
+		cout << " MPI_Init error " << endl;
+		MPI_Abort(MPI_COMM_WORLD, error);
+	}
 
-        double a[AROW][ACOL];
-        double b[ACOL];
+	MPI_Comm_size(MPI_COMM_WORLD, &my_size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+	
+	double *matrix2, *vector2,*matrix3,*aux,*result;
+	
+	if (my_rank == 0){
+		
+		matrix1 = ReadFile(F_A);
+		vector1 = ReadFile(F_B);
+		
+		n_rows = matrix1.getRows();
+		m_columns = matrix1.getColumns();
 
-        /* Generating Random Values for A & B Array*/
-        //srand(time(NULL));
-        for (int i=0;i<AROW;i++)
-        {
-            for (int j=0;j<ACOL;j++)
-            {
-                MPI_File_read(cFile,&dd,1,MPI_DOUBLE,&status);
-                a[i][j] = dd;
-                //printf("%d  ",a[i][j]);
-            }
-        }
-        MPI_File_close( &cFile );
+		left = my_rank * n_rows / my_size;
+		right = (my_rank + 1) * n_rows / my_size - 1;
+		length = right - left + 1 ;
+		
+	}
 
-        int r2 = MPI_File_open( MPI_COMM_SELF, argv[2], MPI_MODE_RDONLY, MPI_INFO_NULL, &cFile2);
+	MPI_Bcast(&n_rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&m_columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+			
+	MPI_Barrier(MPI_COMM_WORLD);
+		
+	
+	if ( my_rank == 0 ){
+		matrix2 = ChangeArray(matrix1);
+		vector2 = ChangeArray(vector1);
+	}
+	else {
+		vector2 = new double[m_columns];
+	}
 
-        for (int j=0;j<ACOL;j++)
-        {
-            MPI_File_read(cFile2,&dd,1,MPI_DOUBLE,&status);
-            b[j] = dd;
-                //printf("%d  ",a[i][j]);
-        }
-        MPI_File_close( &cFile2 );
+	MPI_Bcast(vector2, m_columns, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
+			
+	matrix3 = new double [m_columns * length];
 
+	MPI_Scatter(matrix2, m_columns * length, MPI_DOUBLE, matrix3, m_columns * length, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-        /* Printing the Matrix*/
+	Matrix aux2 = ChangeMatriz(length, m_columns, matrix3); 
+		
+	//start time
+	t_start = MPI_Wtime();
 
-//        printf("Matrix A :\n");
-//        for (int i=0;i<AROW;i++)
-//        {
-//            for (int j=0;j<ACOL;j++)
-//            {
-//                printf("%.3lf ", a[i][j]);
-//            }
-//            printf("\n");
-//        }
-//        printf("nMatrix B :\n");
-//        for (int i=0;i<ACOL;i++)
-//        {
-//            printf("%.3lf ", b[i]);
-//        }
-//        printf("\n");
+	result = VecXMat(aux2, vector2);  
+		
+	t_end = MPI_Wtime() - t_start;
+	//end time
+		
+	if( my_rank != 0){
+		MPI_Send(&t_end, 1, MPI_DOUBLE, 0, my_rank, MPI_COMM_WORLD);
+	}
+			
+	delete[] matrix3;
+	delete[] vector2;
 
-        elapsed_time = -MPI_Wtime();
-
-        /* (1) Sending B Values to other processes */
-        for (int j=1;j<size;j++)
-        {
-            MPI_Send(b, ACOL, MPI_DOUBLE, j, 99, MPI_COMM_WORLD);
-        }
-
-        /* (2) Sending Required A Values to specific process */
-        for (int i=0;i<AROW;i++)
-        {
-            int processor = proc_map(i, size);
-            MPI_Send(a[i], ACOL, MPI_DOUBLE, processor, (100*(i+1)), MPI_COMM_WORLD);
-        }
-
-
-
-    }
-
-    MPI_Bcast(&AROW, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&ACOL, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if(rank != 0)
-    {
-        double b[ACOL];
-//
-//        /* (1) Each process get B Values from Master */
-        MPI_Recv(b, ACOL, MPI_DOUBLE, 0, 99, MPI_COMM_WORLD, &Stat);
-//
-//        /* (2) Get Required A Values from Master then Compute the result */
-        for (int i=0;i<AROW;i++)
-        {
-            int processor = proc_map(i, size);
-            if (rank == processor)
-            {
-                double buffer[ACOL];
-                MPI_Recv(buffer, ACOL, MPI_DOUBLE, 0, (100*(i+1)), MPI_COMM_WORLD, &Stat);
-                double sum = 0.0;
-                for (int j=0;j<ACOL;j++)
-                {
-                    sum = sum + (buffer[j] * b[j] );
-                }
-                MPI_Send(&sum, 1, MPI_DOUBLE, 0, i, MPI_COMM_WORLD);
-                //printf("rank %d i %d\n",rank,i);
-            }
-        }
-    }
-
-    if(rank == 0){
-         /* (3) Gathering the result from other processes*/
-
-        double c[AROW];
-        for (int i=0;i<AROW;i++)
-        {
-            int source_process = proc_map(i, size);
-            MPI_Recv(&c[i], 1, MPI_DOUBLE, source_process, i, MPI_COMM_WORLD, &Stat);
-            //printf("%.2f ", c[i]);
-            //printf("rank %d i %d\n",source_process,i);
-        }
-
-    }
+	if (my_rank == 0) {
+		delete[] matrix2;
+	}
 
 
-    tm = MPI_Wtime();
-    elapsed_time += tm;
-	if(maxtime > tm)
-		maxtime = tm;
-
-    MPI_Reduce(&elapsed_time, &s, 1, MPI_DOUBLE,MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&maxtime, &maxi, 1, MPI_DOUBLE,MPI_MAX, 0, MPI_COMM_WORLD);
-
-    if(rank == 0){
-        printf("Total elapsed time: %10.6fs\n",s/100000);
-        printf("Max time: %10.6fs\n",maxi/100000);
-    }
-
-    MPI_Finalize();
-
-      FILE * f = fopen(argv[3],"a+b");
-            fprintf(f,"%d ", AROW);
-            fprintf(f,"%d ", ACOL);
-        double c[AROW];
-        for (int i=0;i<AROW;i++)
-        {
-            fprintf(f,"%.2f ", c[i]);
-        }
-        fclose(f);
+	MPI_Status status;
 
 
-    return 0;
-}
+	if ( my_rank == 0 ){
+		t_total+=t_end;
+		aux = new double [n_rows];
+		if( t_end > t_max)
+			t_max = t_end;
+		for (int i = 0; i < my_size -1; ++i){
+			MPI_Recv(&t_end, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+			if( t_end > t_max)
+				t_max = t_end;
+			t_total += t_end;
+		}
 
+	}
+	
+	
+	MPI_Gather(result, length , MPI_DOUBLE, aux, length, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+			
+		delete[] result;
 
-int proc_map(int i, int size)
-{
-    size = size - 1;
-    int r = (int) ceil( (double)AROW / (double)size);
-    int proc = i / r;
-    return proc + 1;
+	
+	
+	if (my_rank ==0){
+		
+		if (my_size > 1) {
+			
+			float t_t_1;
+			double speedup, efficiency;
+			ifstream fin ("base_1", ios::in);
+			fin >> t_t_1;
+			fin.close();
+			speedup = (double)t_t_1 / t_max;
+			efficiency = speedup / my_size;
+			ofstream fout("result", ios::app);
+			fout << my_size << " " << t_total << " " << t_max << " " << speedup << " " << efficiency <<endl; 
+			fout.close();
+			
+		}
+		else {
+			ofstream fout1p ("base_1", ios::out);
+			fout1p << t_max << " " << t_total << " " << my_size<<endl;
+			fout1p.close();
+		}
+		
+		
+		int one=1;
+		const char* out_cstr = F_C.c_str();
+		ofstream fvec (out_cstr, ios::binary | ios::out);
+		fvec.write((char*)&n_rows, sizeof(int));
+		fvec.write((char*)&one, sizeof(int));
+		for (int i = 0; i < n_rows; i++)
+			fvec.write((char*)&aux[i], sizeof(double));
+		fvec.close();
+		
+	}
+	MPI_Finalize();
+	delete[] aux;
+	return 0;
 }
