@@ -38,7 +38,6 @@ Matrix ReadFile(const string &strr){
 double* ChangeArray (Matrix &m) {
 	
 	int cont = 0;
-	int my_size;
 	double * array = new double[m.getColumns() * m.getRows()];
 	
 	for (int i = 0; i < m.getRows(); ++i){
@@ -82,3 +81,34 @@ double* VecXMat(Matrix &m, double* v){
 	}
 	return result;	
 }
+
+
+void SaveResult(const char* filename, double * result, int length){
+	
+		int aux3=1;
+		ofstream out (filename, ios::binary | ios::out);
+		out.write((char*)&length, sizeof(int));
+		out.write((char*)&aux3, sizeof(int));
+		for (int i = 0; i < length; i++)
+			out.write((char*)&result[i], sizeof(double));
+		out.close();
+		
+}
+
+
+void SaveComplement(double _max, int _size, double _total){
+	
+	float nodo1;
+	double speedup, efficiency;
+	ifstream in ("base_1", ios::in);
+	in >> nodo1;
+	in.close();
+	speedup = (double)nodo1 / _max;
+	efficiency = speedup / _size;
+	ofstream out("result", ios::app);
+	out << _size << " " << _total << " " << _max << " " << speedup << " " << efficiency <<endl; 
+	out.close();
+	
+}
+
+
