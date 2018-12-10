@@ -1,6 +1,7 @@
 #include "fun.h"
 using namespace std;
 
+
 int main(int argc, char *argv[])
 {
 	
@@ -170,35 +171,22 @@ int main(int argc, char *argv[])
 	
 	if (my_rank ==0){
 		
-		if (my_size > 1) {
-			float nodo1;
-			double speedup, efficiency;
-			ifstream in1 ("base_1", ios::in);
-			in1 >> nodo1;
-			in1.close();
-			speedup = (double)nodo1 / t_max;
-			efficiency = speedup / my_size;
-			ofstream out2("result", ios::out);
-			out2 << my_size << " " << t_total << " " << t_max << " " << speedup << " " << efficiency <<endl; 
-			out2.close();
-			
-		}
+		//Save SpeedUp, Efficiency, MaxTime, TotalTime, NumProcces
+		if (my_size > 1) 
+			SaveComplement(t_max, my_size, t_total);
+		
 		else {
 			ofstream out1 ("base_1", ios::out);
 			out1 << t_max << " " << t_total << " " << my_size<<endl;
 			out1.close();
 		}
 		
-		const char* filename = F_C.c_str();
-		int aux3=1;
-		ofstream out3 (filename, ios::binary | ios::out);
-		out3.write((char*)&n_rows, sizeof(int));
-		out3.write((char*)&aux3, sizeof(int));
-		for (int i = 0; i < n_rows; i++)
-			out3.write((char*)&aux[i], sizeof(double));
-		out3.close();
+		//Save Result Multiplication AxB = C
+		SaveResult(F_C.c_str(), aux, n_rows);
 		
 	}
 	MPI_Finalize();
 	return 0;
 }
+
+
