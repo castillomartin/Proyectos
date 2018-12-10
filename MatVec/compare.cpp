@@ -52,7 +52,7 @@ int main(int argc, char* argv[]){
 	m = matrix1.getColumns();
 	for(int i=0;i<n;i++)
 		for(int j=0;j<m;j++){
-			if(matrix1.matriz[i][j] != matrix2.matriz[i][j]){
+			if(matrix1.matriz[i][j] - matrix2.matriz[i][j] > eps){
 				f = false;
 				break;
 			}
