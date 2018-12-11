@@ -69,7 +69,7 @@ void *setTotalPrimes(void *arg) {
                 Comp[i] = 0;
             }
         }else{
-            if (i % 2 == 0 || i % 3 == 0 || i % 5 == 0 || i % 7 == 0|| i % 11 == 0){
+            if (i % 2 == 0){
                 Comp[i] = 1;
             }
         }
@@ -118,12 +118,14 @@ void *setTotalPrimes(void *arg) {
 
     pthread_mutex_lock (&mutetime);
 	
-	accum = (double)( stoptime.tv_sec - starttime.tv_sec )
-          + (double)( stoptime.tv_nsec - starttime.tv_nsec )
-            / (double)BILLION;
+	accum = ( stoptime.tv_sec - starttime.tv_sec )
+          + ( stoptime.tv_nsec - starttime.tv_nsec )
+            / BILLION;
 			
-     sum1 = sum1 + accum;
-	 
+    // sum1 = sum1 + (double)(end1 - start1) / 1000;
+    //printf("%d-%f: \n",offset,(double)(end1 - start1) / 1000);
+    // if(maxi < (double)(end1 - start1) / 1000)
+        // maxi = (double)(end1 - start1) / 1000;  
 	if(maxi2 < accum)
         maxi2 = accum;
     pthread_mutex_unlock (&mutetime);
@@ -132,6 +134,7 @@ void *setTotalPrimes(void *arg) {
 
     pthread_mutex_lock (&mutexsum);
 	
+    std::cout << "Start : " << start << " End : " << end << " len: " << len << std::endl;
     sum += mysum;
     pthread_mutex_unlock (&mutexsum);
 
@@ -157,7 +160,7 @@ int main (int argc, char *argv[])
     pthread_attr_t attr;
     int input = 0;
     int isLoop = 1;
-    Comp = new long[VECLEN];
+    Comp = new long[100000000];
 	callThd = new pthread_t[NUMTHRDS];
     sum = 0;
 
@@ -183,10 +186,10 @@ int main (int argc, char *argv[])
 
     char file[] = "plot";
     FILE * g = fopen(file,"a+b");
-    fprintf(g,"%d %f %f\n",NUMTHRDS,sum1,maxi2);
+    fprintf(g,"%d %f %f\n",NUMTHRDS,sum1,maxi);
     fclose(g);
     /* After joining, print out the results and cleanup */
-    printf ("Total number of Prime =  %d \nTime: %f\nMax: %f\n", sum, sum1,maxi2);
+    printf ("Total number of Prime =  %d \nTime: %f\nMax: %f\n", sum, accum,maxi2);
 
 
 //
