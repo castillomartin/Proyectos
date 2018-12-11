@@ -69,7 +69,7 @@ void *setTotalPrimes(void *arg) {
                 Comp[i] = 0;
             }
         }else{
-            if (i % 2 == 0){
+            if (i % 2 == 0 || i % 3 == 0 || i % 5 == 0 || i % 7 == 0|| i % 11 == 0){
                 Comp[i] = 1;
             }
         }
@@ -132,7 +132,6 @@ void *setTotalPrimes(void *arg) {
 
     pthread_mutex_lock (&mutexsum);
 	
-    //std::cout << "Start : " << start << " End : " << end << " len: " << len << std::endl;
     sum += mysum;
     pthread_mutex_unlock (&mutexsum);
 
@@ -158,7 +157,7 @@ int main (int argc, char *argv[])
     pthread_attr_t attr;
     int input = 0;
     int isLoop = 1;
-    Comp = new long[100000000];
+    Comp = new long[VECLEN];
 	callThd = new pthread_t[NUMTHRDS];
     sum = 0;
 
