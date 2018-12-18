@@ -64,6 +64,8 @@ void *Sieve(void *thrd_arg)
 
   /* Initialize my part of the global array */
   t_data = (struct thrd_data *) thrd_arg;
+  
+
   myid = t_data->id;
   start = t_data->start;
   end = t_data->end;
@@ -169,12 +171,20 @@ int main(int argc, char *argv[])
     pthread_join(thread_id[i], NULL);
   }
   int j=0;
-  GlobalList[2] = GlobalList[3] = 0;
+  
+  char file[] = "result.bin";
+  FILE * f = fopen(file,"a+b");
+  
+  
+  
+  GlobalList[1] = 0;
+  GlobalList[2] = 0;
   for (i = m; i < n; i++)
   {
 	  
     if (GlobalList[i] == 0)
     {
+		 fprintf(f,"%ld ", i + 1);
         //printf("%ld ", i + 1);
         j++;
     }
