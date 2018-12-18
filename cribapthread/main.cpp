@@ -54,7 +54,7 @@ void mylib_barrier_destroy(mylib_barrier_t *b)
   pthread_cond_destroy(&(b -> ok_to_proceed));
 }
 
-void *DoSieve(void *thrd_arg)
+void *Sieve(void *thrd_arg)
 {
 
   struct thrd_data *t_data;
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
     else
         k = k + nq;
     t_arg[i].end = k-1;
-    pthread_create(&thread_id[i], &attr, DoSieve, (void *) &t_arg[i]);
+    pthread_create(&thread_id[i], &attr, Sieve, (void *) &t_arg[i]);
   }
 
   /* Wait for all threads to complete then print all prime numbers */
@@ -169,9 +169,6 @@ int main(int argc, char *argv[])
     pthread_join(thread_id[i], NULL);
   }
   int j=0;
-  //Get the spent time for the computation works by all participanting threads
-  //print the result of prime numbers
-  //printf("The prime numbers are listed below:\n");
   GlobalList[2] = GlobalList[3] = 0;
   for (i = m; i < n; i++)
   {
@@ -181,8 +178,6 @@ int main(int argc, char *argv[])
         //printf("%ld ", i + 1);
         j++;
     }
-    //if (j% 15 == 0)
-        //printf("\n");
   }
    printf ("Total number of Prime =  %d \nTime: %f\nMax: %f\n", j, sum1,maxi);
   printf("\n");
