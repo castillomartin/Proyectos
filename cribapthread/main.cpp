@@ -116,7 +116,7 @@ void *Sieve(void *thrd_arg)
             / (double)BILLION;
 	sum1 += aux;
 	if(maxi < aux)
-        maxi = sum1;
+        maxi = aux;
 	
 	
     pthread_mutex_unlock (&mutetime);
