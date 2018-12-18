@@ -1,188 +1,194 @@
 #include <pthread.h>
-#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
-#include <math.h>
+#include <stdbool.h>
+#include <time.h>
 #include <ctime>
+#include <semaphore.h>
 
+struct thrd_data{
+  long id;
+  long start;
+  long end;
+};
+typedef struct {
+  pthread_mutex_t     count_lock;
+  pthread_cond_t      ok_to_proceed;
+  long                count;
+} mylib_barrier_t;
 
-int NUMTHRDS = 4;
-pthread_t * callThd;
-pthread_mutex_t mutexsum;
-pthread_mutex_t mutetime;
-int sum;
 float sum1 = 0.0,maxi=0.0;
-long * Comp;
-int VECLEN = 50;
-int IECLEN = 10;
+pthread_mutex_t mutetime;
 long long int start1,end1;
+bool *GlobalList;
+long Num_Threads;
+mylib_barrier_t barrier;
 
-void *setTotalPrimes(void *arg) {
-    /* Define and use local variables for convenience */
+void mylib_barrier_init(mylib_barrier_t *b)
+{
+  b -> count = 0;
+  pthread_mutex_init(&(b -> count_lock), NULL);
+  pthread_cond_init(&(b -> ok_to_proceed), NULL);
+}
 
-    int i, start, end, len ;
-    long offset;
-    int mysum = 0;
+void mylib_barrier(mylib_barrier_t *b, long id)
+{
+   pthread_mutex_lock(&(b -> count_lock));
+   b -> count ++;
+   if (b -> count == Num_Threads)
+   {
+     b -> count = 0;
+     pthread_cond_broadcast(&(b -> ok_to_proceed));
+   }
+   else
+   {
+    while (pthread_cond_wait(&(b -> ok_to_proceed), &(b -> count_lock)) !=    0);
 
-    offset = (long)arg;
-
-    char file[] = "rankX.bin";
-	file[4] = offset+'0';
-    FILE * f = fopen(file,"a+b");
-
-    //printf ("I am thread number  %ld \n", offset);
-    len = (VECLEN-IECLEN)/NUMTHRDS;
-    if(double(VECLEN-IECLEN)/NUMTHRDS != (VECLEN-IECLEN)/NUMTHRDS)
-        len++;
-    start = offset*len + IECLEN;
-
-
-    /**
-     VECLEN is not divisible by 3.
-     */
-    if (NUMTHRDS == 3 && offset == 2) {
-        end   = start + len + 2;
-    }else {
-        end   = start + len;
     }
+    pthread_mutex_unlock(&(b -> count_lock));
+}
 
-    if(end > VECLEN)
-        end = VECLEN;
-     if(offset == NUMTHRDS-1)
-        end++;
+void mylib_barrier_destroy(mylib_barrier_t *b)
+{
+  pthread_mutex_destroy(&(b -> count_lock));
+  pthread_cond_destroy(&(b -> ok_to_proceed));
+}
 
+void *DoSieve(void *thrd_arg)
+{
 
-    
+  struct thrd_data *t_data;
+  long i,start, end;
+  long k=2;
+  long myid;
 
-    /**
-     Sieve of Eratoshenes.
-     */
-	 
-	start1 = clock();
-	
-    for (i = start; i < end	; i++) {
-        if (i > 2) {
-            if (Comp[i] == 0) {
-                for (int x = 3 ; x < i; x +=2){
-                    if ( x*x > i)
-                        break;
-                    if ( i % x == 0 ){
-                        Comp[i] = 1;
-						if(offset == 2)
-							//printf("%d %d \n",i,x);
-                        break;
-                    }
-                }
-            }
-        }
-    }  
-	
+  /* Initialize my part of the global array */
+  t_data = (struct thrd_data *) thrd_arg;
+  myid = t_data->id;
+  start = t_data->start;
+  end = t_data->end;
+
+  printf ("Thread %ld: %ld - %ld\n", myid,start,end);
+  
+  start1 = clock();
+  //First loop: find all prime numbers that's less than sqrt(n)
+  while (k*k<=end)
+  {
+      int flag;
+      if(k*k>=start)
+        flag=0;
+      else
+        flag=1;
+      //Second loop: mark all multiples of current prime number
+      for (i = !flag? k*k-1:start+k-start%k-1; i <= end; i += k)
+        GlobalList[i] = 1;
+      i=k;
+      mylib_barrier(&barrier,myid);
+      
+      while (GlobalList[i] == 1)
+            i++;
+         k = i+1;
+
+   }
+
 	end1 = clock();
 	
-	for (i = start; i < end; i++) {
-        if (i > 1 && Comp[i] == 0) {
-            mysum++;
-            fprintf(f,"%d\n",i);
-        }
-    }
-
-  
-
+	
+	
     pthread_mutex_lock (&mutetime);
     sum1 = sum1 + (double)(end1 - start1) / 1000;
     //printf("%d-%f: \n",offset,(double)(end1 - start1) / 1000);
     if(maxi < (double)(end1 - start1) / 1000)
         maxi = (double)(end1 - start1) / 1000;
     pthread_mutex_unlock (&mutetime);
-
-    fclose(f);
-
-    pthread_mutex_lock (&mutexsum);
-    std::cout << "Start : " << start << " End : " << end << " len: " << len << std::endl;
-    sum += mysum;
-    pthread_mutex_unlock (&mutexsum);
-
-
-    pthread_exit((void*) 0);
+	
+	
+  pthread_mutex_lock (&barrier.count_lock);
+  Num_Threads--;
+  if (barrier.count == Num_Threads)
+  {
+    barrier.count = 0;  
+    pthread_cond_broadcast(&(barrier.ok_to_proceed));
+  }
+  pthread_mutex_unlock (&barrier.count_lock);
+  pthread_exit(NULL);
 }
 
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-
-     if (argc != 4)    {
-        printf("Range need: %s <n> <m> <thread>\n", argv[0]);
-        exit(1);
-    }
-
-    IECLEN = atoi(argv[1]);
-    VECLEN = atoi(argv[2]);
-    NUMTHRDS = atoi(argv[3]);
-
-    long i;
-    void *status;
-    pthread_attr_t attr;
-    int input = 0;
-    int isLoop = 1;
-    Comp = new long[VECLEN];
+	char* end;
+  long i, n,n_threads,m;
+  long k, nq, nr;
+  FILE *results;
+  struct thrd_data *t_arg;
+  pthread_t *thread_id;
+  pthread_attr_t attr;
 	
-	/**
-     Initialize the portion of Comp
-     */
-    for (i = 0; i < VECLEN; i++) {
-        if (i < 3){
-            if (i < 2) {
-                Comp[i] = 1;
-            }else{
-                Comp[i] = 0;
-            }
-        }else{
-            if (i % 2 == 0 || i%3 == 0 || i%5 ==0 || i%7 == 0 || i%11 == 0 ) {
-				if(i!=3 && i!=5 && i!=7 && i!=11)
-					Comp[i] = 1;
-            }
-        }
-    }
-	
-	
-	callThd = new pthread_t[NUMTHRDS];
-    sum = 0;
-
-    pthread_mutex_init(&mutexsum, NULL);
-    pthread_mutex_init(&mutetime, NULL);
-
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-
-	for(i=0; i<NUMTHRDS; i++)
-    {
-           pthread_create(&callThd[i], &attr, setTotalPrimes, (void *)i);
+	if(argc>=3){
+		n_threads=strtol(argv[3],&end,10);
+		m = strtol(argv[1],&end,10);
+		n = strtol(argv[2],&end,10);
 	}
+	
+  mylib_barrier_init(&barrier);
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
- 	pthread_attr_destroy(&attr);
+  
+ 
+  //Initialize global list
+  GlobalList=(bool *)malloc(sizeof(bool)*n);
+  for(i=0;i<n;i++)
+    GlobalList[i]=0;
 
-    /* Wait on the other threads */
-	for(i=0; i<NUMTHRDS; i++)
+	GlobalList[0] = GlobalList[1] = 1;
+	GlobalList[2] = GlobalList[3] = 0;
+  thread_id = (pthread_t *)malloc(sizeof(pthread_t)*n_threads);
+  t_arg = (struct thrd_data *)malloc(sizeof(struct thrd_data)*n_threads);
+
+  nq = (n-m) / n_threads;
+  nr = (n-m) % n_threads;
+
+  //if(m<1)m++
+  k = m;
+  Num_Threads=n_threads;
+  for (i=0; i<n_threads; i++){
+    t_arg[i].id = i;
+    t_arg[i].start = k;
+    if (i < nr)
+        k = k + nq + 1;
+    else
+        k = k + nq;
+    t_arg[i].end = k-1;
+    pthread_create(&thread_id[i], &attr, DoSieve, (void *) &t_arg[i]);
+  }
+
+  /* Wait for all threads to complete then print all prime numbers */
+  for (i=0; i<n_threads; i++) {
+    pthread_join(thread_id[i], NULL);
+  }
+  int j=0;
+  //Get the spent time for the computation works by all participanting threads
+  //print the result of prime numbers
+  //printf("The prime numbers are listed below:\n");
+  GlobalList[2] = GlobalList[3] = 0;
+  for (i = m; i < n; i++)
+  {
+	  
+    if (GlobalList[i] == 0)
     {
-        pthread_join(callThd[i], &status);
-	}
-
-    char file[] = "plot";
-    FILE * g = fopen(file,"a+b");
-    fprintf(g,"%d %f %f\n",NUMTHRDS,sum1,maxi);
-    fclose(g);
-    /* After joining, print out the results and cleanup */
-    printf ("Total number of Prime =  %d \nTime: %f\nMax: %f\n", sum, sum1,maxi);
-
-
-//
-//    for (int i = 0;  i <= VECLEN; i++) {
-//        std::cout << i << ":" << Comp[i] << std::endl ;
-//    }
-
-    pthread_mutex_destroy(&mutexsum);
-    pthread_exit(NULL);
-
+        //printf("%ld ", i + 1);
+        j++;
+    }
+    //if (j% 15 == 0)
+        //printf("\n");
+  }
+   printf ("Total number of Prime =  %d \nTime: %f\nMax: %f\n", j, sum1,maxi);
+  printf("\n");
+  // Clean up and exit
+  free(GlobalList);
+  pthread_attr_destroy(&attr);
+  mylib_barrier_destroy(&barrier); // destroy barrier object
+  pthread_exit (NULL);
 }
