@@ -5,6 +5,7 @@
 #include <time.h>
 #include <ctime>
 #include <semaphore.h>
+#define BILLION  1000000000L;
 
 struct thrd_data{
   long id;
@@ -17,12 +18,14 @@ typedef struct {
   long                count;
 } mylib_barrier_t;
 
-float sum1 = 0.0,maxi=0.0;
+double sum1 = 0.0,maxi=0.0,aux = 0.0;
 pthread_mutex_t mutetime;
 long long int start1,end1;
 bool *GlobalList;
 long Num_Threads;
 mylib_barrier_t barrier;
+struct timespec starttime, stoptime;
+
 
 void mylib_barrier_init(mylib_barrier_t *b)
 {
@@ -72,7 +75,12 @@ void *Sieve(void *thrd_arg)
 
   printf ("Thread %ld: %ld - %ld\n", myid,start,end);
   
-  start1 = clock();
+  if( clock_gettime( CLOCK_REALTIME, &starttime) == -1 ) {
+      perror( "clock gettime" );
+      exit( EXIT_FAILURE );
+  }
+	
+	
   //First loop: find all prime numbers that's less than sqrt(n)
   while (k*k<=end)
   {
@@ -93,15 +101,24 @@ void *Sieve(void *thrd_arg)
 
    }
 
-	end1 = clock();
-	
+	//end1 = clock();
+
+    if( clock_gettime( CLOCK_REALTIME, &stoptime) == -1 ) {
+      perror( "clock gettime" );
+      exit( EXIT_FAILURE );
+    }
 	
 	
     pthread_mutex_lock (&mutetime);
-    sum1 = sum1 + (double)(end1 - start1) / 1000;
-    //printf("%d-%f: \n",offset,(double)(end1 - start1) / 1000);
-    if(maxi < (double)(end1 - start1) / 1000)
-        maxi = (double)(end1 - start1) / 1000;
+  	
+	aux = ( stoptime.tv_sec - starttime.tv_sec )
+          + ( stoptime.tv_nsec - starttime.tv_nsec )
+            / (double)BILLION;
+	sum1 += aux;
+	if(maxi < aux)
+        maxi = sum1;
+	
+	
     pthread_mutex_unlock (&mutetime);
 	
 	
