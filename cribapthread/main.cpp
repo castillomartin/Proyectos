@@ -5,6 +5,7 @@
 #include <time.h>
 #include <ctime>
 #include <semaphore.h>
+#include <math.h>
 #define BILLION  1000000000L;
 
 struct thrd_data{
@@ -21,6 +22,7 @@ typedef struct {
 double sum1 = 0.0,maxi=0.0,aux = 0.0;
 pthread_mutex_t mutetime;
 long long int start1,end1;
+//bool *koren;
 bool *GlobalList;
 long Num_Threads;
 mylib_barrier_t barrier;
@@ -84,21 +86,14 @@ void *Sieve(void *thrd_arg)
   //First loop: find all prime numbers that's less than sqrt(n)
   while (k*k<=end)
   {
-      int flag;
-      if(k*k>=start)
-        flag=0;
-      else
-        flag=1;
-      //Second loop: mark all multiples of current prime number
-      for (i = !flag? k*k-1:start+k-start%k-1; i <= end; i += k)
+	//Second loop: mark all multiples of current prime number
+      for (i = start+k-start%k-1; i <= end; i += k)
         GlobalList[i] = 1;
-      i=k;
-      mylib_barrier(&barrier,myid);
-      
-      while (GlobalList[i] == 1)
-            i++;
-         k = i+1;
-
+	
+	  // koren[i] == GlobalList[i - 1] --- for 0 < i <= sqrt(end)
+      k++;
+      while (GlobalList[k - 1] == 1 && k*k<=end)
+		k++;
    }
 
 	//end1 = clock();
@@ -154,23 +149,32 @@ int main(int argc, char *argv[])
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-  
- 
   //Initialize global list
   GlobalList=(bool *)malloc(sizeof(bool)*n);
   for(i=0;i<n;i++)
     GlobalList[i]=0;
 
-	GlobalList[0] = GlobalList[1] = 1;
-	GlobalList[2] = GlobalList[3] = 0;
+  long korenlen = (long) floor(sqrt(n)) + 1;
+  //koren=(bool *)malloc(sizeof(bool)*korenlen);
+  //for(i=0;i<korenlen;i+=1)
+  //  koren[i]=0;
+  GlobalList[0] = 1;
+	{
+	  long k = 2;
+	  while (k*k <= korenlen) {
+		for (long i = 2 * k; i < korenlen; i += k)
+			GlobalList[i - 1] = 1;
+		k++;
+		while (GlobalList[k - 1] == 1 && k*k < korenlen)
+			k++;
+	   }
+	}
   thread_id = (pthread_t *)malloc(sizeof(pthread_t)*n_threads);
   t_arg = (struct thrd_data *)malloc(sizeof(struct thrd_data)*n_threads);
 
-  nq = (n-m) / n_threads;
-  nr = (n-m) % n_threads;
-
-  //if(m<1)m++
-  k = m;
+  k = m > korenlen ? m : korenlen;
+  nq = (n-k) / n_threads;
+  nr = (n-k) % n_threads;
   Num_Threads=n_threads;
   for (i=0; i<n_threads; i++){
     t_arg[i].id = i;
@@ -194,8 +198,8 @@ int main(int argc, char *argv[])
   
   
   
-  GlobalList[1] = 0;
-  GlobalList[2] = 0;
+  //GlobalList[1] = 0;
+  //GlobalList[2] = 0;
   for (i = m; i < n; i++)
   {
 	  
